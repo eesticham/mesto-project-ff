@@ -14,6 +14,9 @@ const popupTypeEdit = document.querySelector('.popup_type_edit');
 const popupTypeNewCard = document.querySelector('.popup_type_new-card');
 const popupTypeImage = document.querySelector('.popup_type_image');
 
+const popupCaption = popupTypeImage.querySelector('.popup__caption');
+const popupImage = popupTypeImage.querySelector('.popup__image');
+
 // Forms and inputs
 // edit form
 const formEdit = findPopupForm(popupTypeEdit);
@@ -43,9 +46,6 @@ function setListenerToCardDeleteButton(cardEl) {
     }
   }, { once: true });
 }
-
-const popupCaption = popupTypeImage.querySelector('.popup__caption');
-const popupImage = popupTypeImage.querySelector('.popup__image');
 
 function setListenerToCardImage(cardEl, name, link) {
   const imageEl = cardEl.querySelector('.card__image');
