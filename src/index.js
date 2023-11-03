@@ -10,29 +10,24 @@ const profileName = document.querySelector('.profile__title');
 const profileDescription = document.querySelector('.profile__description');
 
 // Popups
-const popupEdit = document.querySelector('.popup_type_edit');
-const popupNewCard = document.querySelector('.popup_type_new-card');
-const popupImage = document.querySelector('.popup_type_image');
+const popupTypeEdit = document.querySelector('.popup_type_edit');
+const popupTypeNewCard = document.querySelector('.popup_type_new-card');
+const popupTypeImage = document.querySelector('.popup_type_image');
 
 // Forms and inputs
 // edit form
-const formEdit = findPopupForm(popupEdit);
+const formEdit = findPopupForm(popupTypeEdit);
 const nameInput = formEdit.elements.name;
 const jobInput = formEdit.elements.description;
 // new card form
-const formNewCard = findPopupForm(popupNewCard);
+const formNewCard = findPopupForm(popupTypeNewCard);
 const placeNameInput = formNewCard.elements['place-name'];
 const linkInput = formNewCard.elements.link;
-
-// global set Listener to anything we need 
-function setListenerToElement(element, eventType, callback) {
-  element.addEventListener(eventType, callback);
-}
 
 // cards listeners: like, delete, image popup:
 function setListenerToLikeButton(cardEl) {
   const likeButton = cardEl.querySelector('.card__like-button');
-  setListenerToElement(likeButton, 'click', function (event) {
+  likeButton.addEventListener('click', function (event) {
     likeButton.classList.toggle('card__like-button_is-active');
   });
 }
@@ -40,24 +35,27 @@ function setListenerToLikeButton(cardEl) {
 function setListenerToCardDeleteButton(cardEl) {
   const deleteButton = cardEl.querySelector('.card__delete-button');
 
-  setListenerToElement(deleteButton, 'click', function (event) {
+  deleteButton.addEventListener('click', function (event) {
     const listItem = event.target.closest('.places__item');
 
     if (listItem) {
       listItem.remove();
     }
-  });
+  }, { once: true });
 }
+
+const popupCaption = popupTypeImage.querySelector('.popup__caption');
+const popupImage = popupTypeImage.querySelector('.popup__image');
 
 function setListenerToCardImage(cardEl, name, link) {
   const imageEl = cardEl.querySelector('.card__image');
 
   imageEl.addEventListener('click', function () {
-    popupImage.querySelector('.popup__caption').textContent = name;
-    popupImage.querySelector('.popup__image').src = link;
-    popupImage.querySelector('.popup__image').alt = name;
+    popupCaption.textContent = name;
+    popupImage.src = link;
+    popupImage.alt = name;
 
-    openPopup(popupImage, setListenerToElement);
+    openPopup(popupTypeImage);
   });
 }
 
@@ -67,10 +65,10 @@ initialCards.forEach(function (element) {
 });
 
 // edit menu
-setListenerToElement(editButton, 'click', function () {
+editButton.addEventListener('click', function () {
   formEdit.elements.name.value = profileName.textContent;
   formEdit.elements.description.value = profileDescription.textContent;
-  openPopup(popupEdit, setListenerToElement);
+  openPopup(popupTypeEdit);
 });
 
 function handleFormEditSubmit(evt) {
@@ -78,14 +76,15 @@ function handleFormEditSubmit(evt) {
   profileName.textContent = nameInput.value;
   profileDescription.textContent = jobInput.value;
 
-  closePopup(popupEdit);
+  closePopup(popupTypeEdit);
 }
 
 formEdit.addEventListener('submit', handleFormEditSubmit);
 
 // new card add functionality 
-setListenerToElement(newCardButton, 'click', function () {
-  openPopup(popupNewCard, setListenerToElement);
+newCardButton.addEventListener('click', function () {
+  formNewCard.reset();
+  openPopup(popupTypeNewCard);
 });
 
 function handleNewCardFormSubmit(evt) {
@@ -93,23 +92,13 @@ function handleNewCardFormSubmit(evt) {
   cardsContainer.prepend(createCard(placeNameInput.value, linkInput.value, setListenerToCardDeleteButton, setListenerToLikeButton, setListenerToCardImage));
 
   formNewCard.reset();
-  closePopup(popupNewCard);
+  closePopup(popupTypeNewCard);
 }
 
 formNewCard.addEventListener('submit', handleNewCardFormSubmit);
 
 // global settings: 
-// all popups close on "ESC"
-function handleKeydown(event) {
-  if (event.key === 'Escape') {
-    [popupEdit, popupNewCard, popupImage].forEach(closePopup);
-    event.target.removeEventListener('keydown', handleKeydown);
-  }
-}
-
-document.addEventListener('keydown', handleKeydown);
-
 // all popups additional class for slow animation
-[popupEdit, popupNewCard, popupImage].forEach(function (popup) {
+[popupTypeEdit, popupTypeNewCard, popupTypeImage].forEach(function (popup) {
   popup.classList.add('popup_is-animated');
 });
