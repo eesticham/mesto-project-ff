@@ -12,6 +12,7 @@
   align-items: center;
   padding: 36px 0;
   /*Если подгонять под ПЭПЭ, то тут padding: 40px 0; Проявите лоялити*/
+  position: relative;
 }
 
 @media screen and (max-width: 480px) {
