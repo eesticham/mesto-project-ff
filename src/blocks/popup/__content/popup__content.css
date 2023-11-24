@@ -21,3 +21,7 @@
 .popup__content_confirm {
   min-height: 0;
 }
+
+.popup__content_avatar {
+  min-height: 0;
+}

@@ -1,6 +1,6 @@
+import './pages/index.css';
 import { createCard } from './scripts/card.js';
 import { openPopup, closePopup, findPopupForm } from './scripts/modal.js';
-import './pages/index.css';
 import { enableValidation, clearValidation } from './scripts/validation.js';
 import { getInitialCards, getProfileData, patchProfileData, postNewCard, deleteCard, putLikeCard, deleteLikeCard, patchProfileAvatar } from './scripts/api.js'
 
@@ -11,8 +11,10 @@ const newCardButton = document.querySelector('.profile__add-button');
 const profileAvatar = document.querySelector('.profile__image');
 const profileName = document.querySelector('.profile__title');
 const profileDescription = document.querySelector('.profile__description');
+let currentUserId = '';
 
 // Popups
+const popups = document.querySelectorAll('.popup');
 const popupTypeEdit = document.querySelector('.popup_type_edit');
 const popupTypeNewCard = document.querySelector('.popup_type_new-card');
 const popupTypeImage = document.querySelector('.popup_type_image');
@@ -48,42 +50,30 @@ const validationConfig = {
 };
 
 // card listeners: like, delete, image popup:
-function setListenerToLikeButton(cardEl) {
-  const likeButton = cardEl.querySelector('.card__like-button');
-  likeButton.addEventListener('click', function (event) {
-    let likes = cardEl.querySelector('.card__likes-quantity');
+// like func
+function likeCardOnClick(evt) {
+  const likeButton = evt.target;
+  const likedCardElement = likeButton.closest('.card');
+  const likesQuantityElement = likedCardElement.querySelector('.card__likes-quantity');
 
-    if (likeButton.classList.contains('card__like-button_is-active')) {
-      deleteLikeCard(cardEl.dataset.imgId)
-      .then((response) => {
-         likes.textContent = response.likes.length;
-      })
-      .catch((err) => {
-        console.log(err);
-      })
-    } else {
-      putLikeCard(cardEl.dataset.imgId)
-      .then((response) => {
-         likes.textContent = response.likes.length;
-      })
-      .catch((err) => {
-        console.log(err);
-      })
-    }
-    
-    likeButton.classList.toggle('card__like-button_is-active');
-  });
+  const likeMethod = likeButton.classList.contains('card__like-button_is-active') ? deleteLikeCard : putLikeCard;
+  likeMethod(likedCardElement.dataset.imgId)
+    .then((response) => {
+      likesQuantityElement.textContent = response.likes.length;
+      likeButton.classList.toggle('card__like-button_is-active');
+    })
+    .catch((err) => {
+      console.log(err);
+    })
 }
 
-function setListenerToCardDeleteButton(cardEl) {
-  const deleteButton = cardEl.querySelector('.card__delete-button');
-  deleteButton.addEventListener('click', function (event) {
-    formConfirm.dataset.imgId = cardEl.dataset.imgId;
-    formConfirm.dataset.ownerId = cardEl.dataset.ownerId;
-    const confirmContent = popupTypeConfirmDelete.querySelector('.popup__content');
-    confirmContent.classList.add('popup__content_confirm');
-    openPopup(popupTypeConfirmDelete);
-  });
+// del card func
+function deleteCardOnClick(evt) {
+  const deleteButton = evt.target;
+  const cardElement = deleteButton.closest('.card');
+  formConfirm.dataset.imgId = cardElement.dataset.imgId;
+
+  openPopup(popupTypeConfirmDelete);
 }
 
 function handleFormConfirmSubmit(evt) {
@@ -93,30 +83,23 @@ function handleFormConfirmSubmit(evt) {
     deleteCard(listItem.dataset.imgId)
       .then((deleteResponse) => {
         console.log(`${deleteResponse.message}: id - ${listItem.dataset.imgId}`);
+        listItem.remove();
+        closePopup(popupTypeConfirmDelete);
       })
       .catch((err) => {
         console.log(err); // выводим ошибку в консоль
       })
-      .finally(() => {
-        listItem.remove();
-      });
   }
-
-  closePopup(popupTypeConfirmDelete);
 }
 
 formConfirm.addEventListener('submit', handleFormConfirmSubmit);
 
-function setListenerToCardImage(cardEl, name, link) {
-  const imageEl = cardEl.querySelector('.card__image');
+// image func
+function showImageOnClick(evt) {
+  popupCaption.textContent = evt.target.alt;
+  popupImage.src = popupImage.alt = evt.target.src;
 
-  imageEl.addEventListener('click', function () {
-    popupCaption.textContent = name;
-    popupImage.src = link;
-    popupImage.alt = name;
-
-    openPopup(popupTypeImage);
-  });
+  openPopup(popupTypeImage);
 }
 
 
@@ -137,15 +120,12 @@ function handleFormEditSubmit(evt) {
     .then((profile) => {
       profileName.textContent = profile.name;
       profileDescription.textContent = profile.about;
+      closePopup(popupTypeEdit);
+      changeSubmitButtonText(formEdit, 'Сохранить');
     })
     .catch((err) => {
       console.log(err); // выводим ошибку в консоль
     })
-    .finally(() => {
-      changeSubmitButtonText(formEdit, 'Сохранить');
-    }); 
-
-  closePopup(popupTypeEdit);
 }
 
 formEdit.addEventListener('submit', handleFormEditSubmit);
@@ -171,16 +151,13 @@ function handleNewCardFormSubmit(evt) {
     .then((cardData) => {
       // 2 use received response to add new card
       console.log(`new card added: ${cardData._id}`);
-      cardsContainer.prepend(createCard(cardData, setListenerToCardDeleteButton, setListenerToLikeButton, setListenerToCardImage));
+      cardsContainer.prepend(createCard(cardData, deleteCardOnClick, likeCardOnClick, showImageOnClick, currentUserId));
+      closePopup(popupTypeNewCard);
+      changeSubmitButtonText(formNewCard, 'Сохранить');
     })
     .catch((err) => {
       console.log(err); // выводим ошибку в консоль
     })
-    .finally(() => {
-      formNewCard.reset();
-      closePopup(popupTypeNewCard);
-      changeSubmitButtonText(formNewCard, 'Сохранить');
-    });
 }
 
 formNewCard.addEventListener('submit', handleNewCardFormSubmit);
@@ -200,19 +177,16 @@ function handleAvatarFormSubmit(evt) {
 
   // 1 send request postNewCard
   patchProfileAvatar(linkAvatarInput.value)
-  .then((response) => {
-    // 2 use received response to add new card
-    console.log(`avatar updated: ${response.avatar}`);
-    updateProfileImage(response.avatar);
-  })
-  .catch((err) => {
-    console.log(err); // выводим ошибку в консоль
-  })
-  .finally(() => {
-    formAvatar.reset();
-    closePopup(popupTypeAvatar);
-    changeSubmitButtonText(formAvatar, 'Сохранить');
-  });
+    .then((response) => {
+      // 2 use received response to add new card
+      console.log(`avatar updated: ${response.avatar}`);
+      updateProfileImage(response.avatar);
+      closePopup(popupTypeAvatar);
+      changeSubmitButtonText(formAvatar, 'Сохранить');
+    })
+    .catch((err) => {
+      console.log(err); // выводим ошибку в консоль
+    })
 }
 
 formAvatar.addEventListener('submit', handleAvatarFormSubmit);
@@ -220,12 +194,17 @@ formAvatar.addEventListener('submit', handleAvatarFormSubmit);
 
 // global settings: 
 // all popups additional class for slow animation
-[popupTypeEdit, popupTypeNewCard, popupTypeImage, popupTypeAvatar, popupTypeConfirmDelete].forEach(function (popup) {
+// mousedown event listener to close popups
+popups.forEach((popup) => {
   popup.classList.add('popup_is-animated');
+  popup.addEventListener('mousedown', (evt) => {
+    if (evt.target.classList.contains('popup_is-opened') || evt.target.classList.contains('popup__close')) {
+      closePopup(popup)
+    }
+  })
 });
 
-enableValidation(validationConfig);  
-
+enableValidation(validationConfig);
 
 // ---------------------------------------------------------------------------
 
@@ -233,32 +212,29 @@ function updateProfileCredentials(name, job) {
   document.querySelector('.profile__title').textContent = name;
   document.querySelector('.profile__description').textContent = job;
 }
-  
+
 function updateProfileImage(url) {
   document.querySelector('.profile__image').style.backgroundImage = `url(${url})`;
 }
 
-// fill page content with user credentials
+// fill page content
 getProfileData()
   .then((result) => {
-    document.querySelector(".profile__info").dataset.userId = result._id;
+    currentUserId = result._id;
     updateProfileImage(result.avatar);
     updateProfileCredentials(result.name, result.about);
+    // fill page with cards only after receiving data about user
+    // needed for cardDelete functionality 
+    getInitialCards()
+      .then((result) => {
+        result.forEach(function (cardData) {
+          cardsContainer.append(createCard(cardData, deleteCardOnClick, likeCardOnClick, showImageOnClick, currentUserId));
+        });
+      })
+      .catch((err) => {
+        console.log(err);
+      });
   })
   .catch((err) => {
     console.log(err);
-  })
-  .finally(() => {
-    // fill page card list with cards only after receiving data about user
-    // needed for cardDelete functionality 
-    getInitialCards()
-    .then((result) => {
-      result.forEach(function (cardData) {
-        cardsContainer.append(createCard(cardData, setListenerToCardDeleteButton, setListenerToLikeButton, setListenerToCardImage));
-      });
-    })
-    .catch((err) => {
-      console.log(err); // выводим ошибку в консоль
-    });
   });
-

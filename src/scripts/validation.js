@@ -50,7 +50,7 @@ function hideError(form, input, validationSettings) {
 
 
 function hasInvalidInput(inputList) {
-  return inputList.some((inputElement) => {return !inputElement.validity.valid;});
+  return inputList.some((inputElement) => { return !inputElement.validity.valid; });
 };
 
 function toggleButtonState(inputList, buttonElement, validationSettings) {

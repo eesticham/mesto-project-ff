@@ -1,5 +1,3 @@
-const popups = document.querySelectorAll('.popup');
-
 function closeByEscape(evt) {
   if (evt.key === 'Escape') {
     const openedPopup = document.querySelector('.popup_is-opened');
@@ -20,18 +18,3 @@ export function closePopup(popup) {
 export function findPopupForm(popup) {
   return popup.querySelector('.popup__form');
 }
-
-export function findPopupCloseButton(popup) {
-  return popup.querySelector('.popup__close');
-}
-
-popups.forEach((popup) => {
-  popup.addEventListener('mousedown', (evt) => {
-    if (evt.target.classList.contains('popup_is-opened')) {
-      closePopup(popup)
-    }
-    if (evt.target.classList.contains('popup__close')) {
-      closePopup(popup)
-    }
-  })
-})
